@@ -1,6 +1,6 @@
 import time
 
-from src.agents import QLearningAgent, MonteCarloAgent
+from src.agents import MonteCarloAgent, ExploitationMonteCarloAgent, ExplorationMonteCarloAgent
 from src.players import Player
 from src.turn import Turn
 from src.cards import Card, Deck
@@ -87,10 +87,13 @@ def tournament(iterations, algo, comment, agent_info):
     global agent, algorithm
     algorithm = algo
     
-    if algo == "q-learning":
-        agent = QLearningAgent(agent_info)
-    else:
+
+    if algo == "mix-monte-carlo":
         agent = MonteCarloAgent(agent_info)
+    elif algo == "exploitation-monte-carlo":
+        agent = ExploitationMonteCarloAgent(agent_info)
+    else:
+        agent = ExplorationMonteCarloAgent(agent_info)
     
     winners, turns, coverage = list(), list(), list()
 

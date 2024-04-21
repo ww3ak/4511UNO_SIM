@@ -7,7 +7,10 @@ import src.state_action_reward as sar
 
 class Agent(object):
     def __init__(self, agent_info:dict):
-        """Initializes the agent to get parameters and create an empty q-tables."""
+        """Initializes the agent to get parameters and create an empty q-tables.
+            q table holds values and estimates for each state-action pair
+            visit table countes each visit to each state-action pair
+        """
 
         self.epsilon     = agent_info["epsilon"]
         self.step_size   = agent_info["step_size"]
@@ -22,85 +25,6 @@ class Agent(object):
         )
         
         self.visit = self.q.copy()
-
-    
-class QLearningAgent(Agent):
-    
-    def __init__(self, agent_info:dict):        
-        
-        super().__init__(agent_info)
-        self.prev_state  = 0
-        self.prev_action = 0
-    
-    def step(self, state_dict, actions_dict):
-        """
-        Choose the optimal next action according to the followed policy.
-        Required parameters:
-            - state_dict as dict
-            - actions_dict as dict
-        """
-        
-        # (1) Transform state dictionary into tuple
-        state = [i for i in state_dict.values()]
-        state = tuple(state)
-        
-        # (2) Choose action using epsilon greedy
-        # (2a) Random action
-        if random.random() < self.epsilon:
-            
-            actions_possible = [key for key,val in actions_dict.items() if val != 0]         
-            action = random.choice(actions_possible)
-        
-        # (2b) Greedy action
-        else:
-            actions_possible = [key for key,val in actions_dict.items() if val != 0]
-            random.shuffle(actions_possible)
-            val_max = 0
-            
-            for i in actions_possible:
-                val = self.q.loc[[state],i][0]
-                if val >= val_max: 
-                    val_max = val
-                    action = i
-        
-        return action
-    
-    def update(self, state_dict, action):
-        """
-        Updating Q-values according to Belman equation
-        Required parameters:
-            - state_dict as dict
-            - action as str
-        """
-        state = [i for i in state_dict.values()]
-        state = tuple(state)
-        
-        # (1) Set prev_state unless first turn
-        if self.prev_state != 0:
-            prev_q = self.q.loc[[self.prev_state], self.prev_action][0]
-            this_q = self.q.loc[[state], action][0]
-            reward = self.R.loc[[state], action][0]
-            
-            print ("\n")
-            print (f'prev_q: {prev_q}')
-            print (f'this_q: {this_q}')
-            print (f'prev_state: {self.prev_state}')
-            print (f'this_state: {state}')
-            print (f'prev_action: {self.prev_action}')
-            print (f'this_action: {action}')
-            print (f'reward: {reward}')
-            
-            # Calculate new Q-values
-            if reward == 0:
-                self.q.loc[[self.prev_state], self.prev_action] = prev_q + self.step_size * (reward + this_q - prev_q) 
-            else:
-                self.q.loc[[self.prev_state], self.prev_action] = prev_q + self.step_size * (reward - prev_q)
-                
-            self.visit.loc[[self.prev_state], self.prev_action] += 1
-            
-        # (2) Save and return action/state
-        self.prev_state  = state
-        self.prev_action = action
       
         
 class MonteCarloAgent(Agent):
@@ -118,13 +42,25 @@ class MonteCarloAgent(Agent):
         Required parameters:
             - state_dict as dict
             - actions_dict as dict
+        agent decides whether to do random actiion (exploration decided by 'epsilon') 
+        or action with highest estimates value (exploitaion)
+        action based on e-greedy policy with probability epsilon in which a random action is chosen 
+        and with probability 1-epsilon were the highsest current estimate form q table is chosen 
+
+        specifically deals with the exploration vs exploitation using e greedy 
+        random --> exploration 
+        best known action accoding to Q table --> exploitation 
+
+        e-greedy strat is designed to balance between both known rewards --> on policy 
+
+
+        
         """
         
         # (1) Transform state dictionary into tuple
         state = [i for i in state_dict.values()]
         state = tuple(state)
         
-        # (2) Choose action using epsilon greedy
         # (2a) Random action
         if random.random() < self.epsilon:
             
@@ -159,6 +95,8 @@ class MonteCarloAgent(Agent):
         Required parameters:
             - state_dict as dict
             - action as str
+
+        end of an "episode" reward recieed after execution of an action state used to update Q values 
         """
         
         state  = [i for i in state_dict.values()]
@@ -171,3 +109,76 @@ class MonteCarloAgent(Agent):
             print (self.q.loc[[s],a])
         
         self.state_seen, self.action_seen, self.q_seen = list(), list(), list()
+
+
+
+class ExplorationMonteCarloAgent(Agent):
+
+    def __init__(self, agent_info:dict):
+
+        super().__init__(agent_info)
+        self.state_seen  = list()
+        self.action_seen = list()
+        self.q_seen      = list()
+
+    def step(self, state_dict, actions_dict):
+        """Choose a random next action from the possible actions."""
+        actions_possible = [key for key, val in actions_dict.items() if val != 0]
+        action = random.choice(actions_possible)  # Always select a random action
+        state = tuple(state_dict.values())
+        
+        # Track state-action pairs for updating
+        self.state_seen.append(state)
+        self.action_seen.append(action)
+        self.q_seen.append((state, action))
+        self.visit.loc[[state], action] += 1
+        
+        return action
+    
+    def update(self, state_dict, action):
+        """Update Q-values with a uniform reward assumption"""
+        state = tuple(state_dict.values())
+        reward = self.R.loc[[state], action][0]
+        
+        for s, a in zip(self.state_seen, self.action_seen):
+            self.q.loc[[s], a] += self.step_size * (reward - self.q.loc[[s], a])
+        
+        # Clear lists after update
+        self.state_seen, self.action_seen, self.q_seen = [], [], []
+
+
+
+class ExploitationMonteCarloAgent(Agent):
+    def __init__(self, agent_info:dict):
+
+        super().__init__(agent_info)
+        self.state_seen  = list()
+        self.action_seen = list()
+        self.q_seen      = list()
+
+    def step(self, state_dict, actions_dict):
+        """Choose the best action based on Q-values from the possible actions."""
+        state = tuple(state_dict.values())
+        actions_possible = [key for key, val in actions_dict.items() if val != 0]
+
+        # Select the action with the highest Q-value among possible actions
+        action = max(actions_possible, key=lambda x: self.q.loc[state, x])
+        
+        # Track state-action pairs for updating
+        self.state_seen.append(state)
+        self.action_seen.append(action)
+        self.q_seen.append((state, action))
+        self.visit.loc[[state], action] += 1
+        
+        return action
+    
+    def update(self, state_dict, action):
+        """Update Q-values with a uniform reward assumption"""
+        state = tuple(state_dict.values())
+        reward = self.R.loc[[state], action][0]
+        
+        for s, a in zip(self.state_seen, self.action_seen):
+            self.q.loc[[s], a] += self.step_size * (reward - self.q.loc[[s], a])
+        
+        # Clear lists after update
+        self.state_seen, self.action_seen, self.q_seen = [], [], []

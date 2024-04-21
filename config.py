@@ -1,6 +1,6 @@
 params = {
     "iterations": 200,
-    "algorithm": "q-learning", # ["q-learning", "monte-carlo"]
+    "algorithm": "exploration-monte-carlo", #[mix-monte-carlo, exploitation-monte-carlo, exploration-monte-carlo]
     "logging": False,
     "model": {
         "epsilon": 0.4,
