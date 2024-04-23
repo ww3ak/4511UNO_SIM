@@ -1,6 +1,6 @@
 import time
 
-from src.agents import MonteCarloAgent, ExploitationMonteCarloAgent, ExplorationMonteCarloAgent
+from src.agents import MonteCarloAgent, ExploitationMonteCarloAgent, ExplorationMonteCarloAgent, SpecialCardsFirstAgent, ColorChangeAgent, HumanAgent
 from src.players import Player
 from src.turn import Turn
 from src.cards import Card, Deck
@@ -87,6 +87,10 @@ def tournament(iterations, algo, comment, agent_info):
     global agent, algorithm
     algorithm = algo
     
+    human_agent_info = agent_info.copy()
+
+    #change if u want it to play against other ones
+    human_agent = HumanAgent(human_agent_info)
 
     if algo == "mix-monte-carlo":
         agent = MonteCarloAgent(agent_info)
@@ -94,6 +98,10 @@ def tournament(iterations, algo, comment, agent_info):
         agent = ExploitationMonteCarloAgent(agent_info)
     elif algo == "exploration-monte-carlo":
         agent = ExplorationMonteCarloAgent(agent_info)
+    elif algo == "special-cards-monte-carlo":
+        agent = SpecialCardsFirstAgent(agent_info)
+    elif algo == "color-change-monte-carlo":
+        agent = ColorChangeAgent(agent_info)
     
     winners, turns, coverage = list(), list(), list()
 
@@ -118,6 +126,8 @@ def tournament(iterations, algo, comment, agent_info):
                 algorithm=algo,
                 comment=comment
             )
+
+        game.player_2.agent = human_agent
 
         winners.append(game.winner)
         turns.append(game.turn_no)

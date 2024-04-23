@@ -67,3 +67,8 @@ class Deck(object):
     def show_discarded(self):
         for c in self.cards_disc:
             c.show_card()
+
+    def current_color(self):
+        if len(self.cards_disc) > 0:
+            return self.cards_disc[-1].color  # Return color of the top card in the discard pile
+        return None  

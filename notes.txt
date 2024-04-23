@@ -1,0 +1,11 @@
+FOCUS: game dynamics, strategies, and outcomes
+
+ANALYSIS: 
+
+Game Turn Distributions
+- PLOTS: distributions of number of turns per game
+- PURPOSE: help understand how long games typically last in terms of turns
+
+Win Rate
+- PLOTS: Win rate progression over simulations 
+- PURPOSE: win rate across multiple games to see trends or paterns/ A measure of how often a player or strategy won.

@@ -28,8 +28,14 @@ def main():
     if not os.path.exists("assets"):
         os.makedirs("assets")
 
-    q_vals.to_csv("assets/q-values.csv", index=True)
-    result.to_csv("assets/results.csv", index=False) 
+    # Access the algorithm name from config
+    algorithm_name = conf.params['algorithm']
+
+    # Remove any special characters and replace spaces or hyphens
+
+    # Modify your DataFrame saving calls
+    q_vals.to_csv(f"assets/{algorithm_name}-q-values.csv", index=True)
+    result.to_csv(f"assets/{algorithm_name}-results.csv", index=False)
     
 
 if __name__ == "__main__":

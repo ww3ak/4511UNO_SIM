@@ -25,7 +25,39 @@ class Agent(object):
         )
         
         self.visit = self.q.copy()
-      
+
+class HumanAgent(Agent):
+    '''
+    This is the baseline human player that plays the first possible card availble. Each agent will play against this one 
+    '''
+    def __init__(self, agent_info:dict):
+
+        super().__init__(agent_info)
+        self.state_seen  = list()
+        self.action_seen = list()
+        self.q_seen      = list()
+
+    def step(self, state_dict, actions_dict):
+        """Choose the first playable card from the possible actions."""
+        state = tuple(state_dict.values())
+        
+        # Identify all possible actions that are playable (i.e., action value != 0)
+        actions_possible = [key for key, val in actions_dict.items() if val != 0]
+        
+        # Simply return the first available action
+        if actions_possible:
+            action = actions_possible[0]
+        else:
+            action = None  # No playable actions available
+        
+        # Track state-action pairs for updating (if needed)
+        self.state_seen.append(state)
+        self.action_seen.append(action)
+        self.q_seen.append((state, action))
+        self.visit.loc[[state], action] += 1
+        
+        return action
+
         
 class MonteCarloAgent(Agent):
 
@@ -148,6 +180,7 @@ class ExplorationMonteCarloAgent(Agent):
 
 
 
+
 class ExploitationMonteCarloAgent(Agent):
     def __init__(self, agent_info:dict):
 
@@ -182,3 +215,82 @@ class ExploitationMonteCarloAgent(Agent):
         
         # Clear lists after update
         self.state_seen, self.action_seen, self.q_seen = [], [], []
+
+class SpecialCardsFirstAgent(Agent):
+    def __init__(self, agent_info:dict):
+
+        super().__init__(agent_info)
+        self.state_seen  = list()
+        self.action_seen = list()
+        self.q_seen      = list()
+    
+    def step(self, state_dict, actions_dict):
+        state = tuple(state_dict.values())
+        actions_possible = [key for key, val in actions_dict.items() if val != 0]
+        
+        # Prioritize special cards
+        special_cards = [a for a in actions_possible if 'skip' in a or 'reverse' in a or 'plus2' in a or 'plus4' in a]
+        if special_cards and random.random() > self.epsilon:  # Use ε-greedy to sometimes explore non-special
+            action = random.choice(special_cards)
+        else:
+            action = random.choice(actions_possible)  # Default to any possible action if no special cards
+
+        self.state_seen.append(state)
+        self.action_seen.append(action)
+        self.q_seen.append((state, action))
+        self.visit.loc[[state], action] += 1
+
+        return action
+    
+    def update(self, state_dict, action):
+        """Update Q-values with a uniform reward assumption"""
+        state = tuple(state_dict.values())
+        reward = self.R.loc[[state], action][0]
+        
+        for s, a in zip(self.state_seen, self.action_seen):
+            self.q.loc[[s], a] += self.step_size * (reward - self.q.loc[[s], a])
+        
+        # Clear lists after update
+        self.state_seen, self.action_seen, self.q_seen = [], [], []
+
+class ColorChangeAgent(Agent):
+    def __init__(self, agent_info:dict):
+
+        super().__init__(agent_info)
+        self.state_seen  = list()
+        self.action_seen = list()
+        self.q_seen      = list()
+        
+    def step(self, state_dict, actions_dict):
+        """Choose action to change the color of the card in play as often as possible."""
+        state = tuple(state_dict.values())
+        current_color = state_dict.get('current_color', None)  # Assuming state_dict contains 'current_color'
+        actions_possible = [key for key, val in actions_dict.items() if val != 0]
+
+        # Filter actions to change color
+        color_changing_actions = [a for a in actions_possible if a.color != current_color and not a.is_wild()]
+        if color_changing_actions and random.random() > self.epsilon:  # Use ε-greedy to sometimes explore non-color changing
+            action = random.choice(color_changing_actions)
+        else:
+            action = random.choice(actions_possible)  # Default to any possible action if no color-changing actions
+
+        self.state_seen.append(state)
+        self.action_seen.append(action)
+        self.q_seen.append((state, action))
+        self.visit.loc[[state], action] += 1
+
+        return action
+    
+    def update(self, state_dict, action):
+        """Update Q-values with a uniform reward assumption"""
+        state = tuple(state_dict.values())
+        reward = self.R.loc[[state], action][0]
+        
+        for s, a in zip(self.state_seen, self.action_seen):
+            self.q.loc[[s], a] += self.step_size * (reward - self.q.loc[[s], a])
+        
+        # Clear lists after update
+        self.state_seen, self.action_seen, self.q_seen = [], [], []
+
+
+
