@@ -92,7 +92,7 @@ def tournament(iterations, algo, comment, agent_info):
         agent = MonteCarloAgent(agent_info)
     elif algo == "exploitation-monte-carlo":
         agent = ExploitationMonteCarloAgent(agent_info)
-    else:
+    elif algo == "exploration-monte-carlo":
         agent = ExplorationMonteCarloAgent(agent_info)
     
     winners, turns, coverage = list(), list(), list()
