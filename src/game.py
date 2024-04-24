@@ -102,6 +102,8 @@ def tournament(iterations, algo, comment, agent_info):
         agent = SpecialCardsFirstAgent(agent_info)
     elif algo == "color-change-monte-carlo":
         agent = ColorChangeAgent(agent_info)
+    else:
+        agent = HumanAgent(agent_info)
     
     winners, turns, coverage = list(), list(), list()
 

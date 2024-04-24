@@ -1,6 +1,6 @@
 params = {
     "iterations": 500,
-    "algorithm": "exploration-monte-carlo", #[mix-monte-carlo, exploitation-monte-carlo, exploration-monte-carlo, special-cards-monte-carlo, color-change-monte-carlo]
+    "algorithm": "human-player", #[mix-monte-carlo, exploitation-monte-carlo, exploration-monte-carlo, special-cards-monte-carlo, color-change-monte-carlo, human-player]
     "logging": False,
     "model": {
         "epsilon": 0.4,

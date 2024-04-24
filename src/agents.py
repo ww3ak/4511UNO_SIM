@@ -57,7 +57,8 @@ class HumanAgent(Agent):
         self.visit.loc[[state], action] += 1
         
         return action
-
+    def update(self, state_dict, action):
+        pass
         
 class MonteCarloAgent(Agent):
 
@@ -84,9 +85,6 @@ class MonteCarloAgent(Agent):
         best known action accoding to Q table --> exploitation 
 
         e-greedy strat is designed to balance between both known rewards --> on policy 
-
-
-        
         """
         
         # (1) Transform state dictionary into tuple
@@ -192,17 +190,25 @@ class ExploitationMonteCarloAgent(Agent):
     def step(self, state_dict, actions_dict):
         """Choose the best action based on Q-values from the possible actions."""
         state = tuple(state_dict.values())
-        actions_possible = [key for key, val in actions_dict.items() if val != 0]
 
-        # Select the action with the highest Q-value among possible actions
-        action = max(actions_possible, key=lambda x: self.q.loc[state, x])
-        
-        # Track state-action pairs for updating
-        self.state_seen.append(state)
-        self.action_seen.append(action)
-        self.q_seen.append((state, action))
-        self.visit.loc[[state], action] += 1
-        
+        # (2) Find the action with the maximum Q-value among possible actions
+        actions_possible = [key for key, val in actions_dict.items() if val != 0]
+        action = None
+        val_max = float('-inf')
+
+        for act in actions_possible:
+            val = self.q.loc[[state], act][0]
+            if val > val_max:
+                val_max = val
+                action = act
+
+        # (3) Add state-action pair if not seen in this simulation
+        if ((state), action) not in self.q_seen:
+            self.state_seen.append(state)
+            self.action_seen.append(action)
+            self.q_seen.append(((state), action))
+            self.visit.loc[[state], action] += 1
+
         return action
     
     def update(self, state_dict, action):
@@ -263,21 +269,26 @@ class ColorChangeAgent(Agent):
         
     def step(self, state_dict, actions_dict):
         """Choose action to change the color of the card in play as often as possible."""
+        # (1) Transform state dictionary into tuple
         state = tuple(state_dict.values())
-        current_color = state_dict.get('current_color', None)  # Assuming state_dict contains 'current_color'
+
+        # (2) Find the action (color change) with the maximum Q-value among possible actions
         actions_possible = [key for key, val in actions_dict.items() if val != 0]
+        action = None
+        val_max = float('-inf')
 
-        # Filter actions to change color
-        color_changing_actions = [a for a in actions_possible if a.color != current_color and not a.is_wild()]
-        if color_changing_actions and random.random() > self.epsilon:  # Use ε-greedy to sometimes explore non-color changing
-            action = random.choice(color_changing_actions)
-        else:
-            action = random.choice(actions_possible)  # Default to any possible action if no color-changing actions
+        for color in actions_possible:
+            val = self.q.loc[[state], color][0]
+            if val > val_max:
+                val_max = val
+                action = color
 
-        self.state_seen.append(state)
-        self.action_seen.append(action)
-        self.q_seen.append((state, action))
-        self.visit.loc[[state], action] += 1
+        # (3) Add state-action pair if not seen in this simulation
+        if ((state), action) not in self.q_seen:
+            self.state_seen.append(state)
+            self.action_seen.append(action)
+            self.q_seen.append(((state), action))
+            self.visit.loc[[state], action] += 1
 
         return action
     
