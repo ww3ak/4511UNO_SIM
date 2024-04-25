@@ -1,14 +1,6 @@
 # Tackling the UNO Card Game with Reinforcement Learning
 
-Author: [Bernhard Pfann](https://www.linkedin.com/in/bernhard-pfann/)<br>
-Article: [https://towardsdatascience.com/tackling-uno-card-game-with-reinforcement-learning](https://towardsdatascience.com/tackling-uno-card-game-with-reinforcement-learning-fad2fc19355c)<br>
-Status: Done<br>
-
 ## Description
-In this project I tried to analytically derive an optimal strategy, for the classic UNO card game. To do so, I structured my work as follows:
-1. Creating a game engine of the UNO card game in Python from scratch
-2. Obtaining game statistics from simulating a series of 100,000 games
-3. Implementing basic Reinforcement Learning techniques (Q-Learning & Monte Carlo) in order to discover an optimal game strategy
 
 <b>UNO card engine:</b> In order to train a Reinforcement Learning (RL) agent how to play intelligently, a fully-fledged game environment needs to be in place, capturing all the mechanics and rules of the game. Class objects for <code>Card</code>, <code>Deck</code>, <code>Player</code>, <code>Turn</code> and <code>Game</code> are defined.
 
